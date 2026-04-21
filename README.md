@@ -1,5 +1,18 @@
 # infos
-Sketch of an app for aggregating important news, events and other infos.
+Sketch of an app for aggregating important news, events and other infos. <br />
+
+Run frontend: <br />
+```bash
+npx next dev
+```
+
+Run backend: <br />
+```bash
+npx nest start
+```
+
+Microservices currently are not functional and contain some pseudo code. <br />
+See *-plan.png files for each service for more details. <br />
 
 # Dev setup
 Linux (Kubuntu 24.04.4 LTS) <br />
@@ -34,3 +47,14 @@ lsof -i :3000
 ```
 to stop it manually
 
+# Infrastructure (not implemented)
+<b>Dev setup: </b> <br />
+Docker for all 4 apps + PostgreSQL <br />
+Run with ```docker compose``` to start the whole setup
+
+<b> Production setup (AWS): </b> <br />
+Frontend: CloudFront <br />
+Backend and microservices: Kubernetes (EKS), EC2 backed <br />
+Database: RDS (PostgreSQL) <br />
+VPC: only backend is public facing, microservices not accessible from outside <br />
+CloudWatch logs for the start <br />
