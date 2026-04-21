@@ -13,6 +13,7 @@ npx nest start
 
 Microservices currently are not functional and contain some pseudo code. <br />
 See *-plan.png files for each service for more details. <br />
+Or https://www.tldraw.com/f/iBIF1hBCl9KwpzX5gvxsP?d=v954.664.1920.954.page
 
 # Dev setup
 Linux (Kubuntu 24.04.4 LTS) <br />
