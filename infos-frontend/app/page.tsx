@@ -1,65 +1,177 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from 'react';
+
+interface InfoProvider {
+  displayName: string;
+  internalName: string;
+  inUse: boolean;
+}
+
+interface AppData {
+  infoProviders: InfoProvider[];
+  deliveryMethods: InfoProvider[];
+}
 
 export default function Home() {
+  const [step, setStep] = useState(1);
+  const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
+  const [selectedDeliveryIndices, setSelectedDeliveryIndices] = useState<Set<number>>(new Set());
+  const [infoProviders, setInfoProviders] = useState<InfoProvider[]>([]);
+  const [deliveryMethods, setDeliveryMethods] = useState<InfoProvider[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/infos');
+        if (!response.ok) {
+          throw new Error('Failed to fetch data');
+        }
+        const data: AppData = await response.json();
+        setInfoProviders(data.infoProviders);
+        setDeliveryMethods(data.deliveryMethods);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError('Error loading data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const toggleBox = (index: number, type: 'provider' | 'method') => {
+    if (type === 'provider') {
+      setSelectedIndices((prev) => {
+        const newSelected = new Set(prev);
+        if (newSelected.has(index)) {
+          newSelected.delete(index);
+        } else {
+          newSelected.add(index);
+        }
+        return newSelected;
+      });
+    } else {
+      setSelectedDeliveryIndices((prev) => {
+        const newSelected = new Set(prev);
+        if (newSelected.has(index)) {
+          newSelected.delete(index);
+        } else {
+          newSelected.add(index);
+        }
+        return newSelected;
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-zinc-50">
+        <p className="text-xl font-semibold text-gray-600">Loading...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-zinc-50">
+        <p className="text-xl font-semibold text-red-600">{error}</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-zinc-50 flex flex-col items-center pt-20 p-8 font-sans">
+      {step === 1 ? (
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-80
+            0">
+            Pick the infos you'd like to receive
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        </header>
+      ) : (
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">
+            How do you want to get them?
+          </h1>
+        </header>
+      )}
+
+      <div className="flex flex-wrap justify-center gap-6 max-w-4xl">
+        {step === 1
+          ? infoProviders.map((provider, index) => {
+              const isSelected = selectedIndices.has(index);
+              const colorClass = isSelected
+                ? "bg-green-50 text-green-700 border-green-200"
+                : "bg-white text-black border-gray-200";
+
+              return (
+                <div
+                  key={provider.internalName}
+                  onClick={() => toggleBox(index, 'provider')}
+                  className={`w-40 h-32 flex items-center justify-center rounded-2xl border p-4 text-center font-medium shadow-sm cursor-pointer transition-colors ${colorClass}`}
+                >
+                  {provider.displayName}
+                </div>
+              );
+            })
+          : (
+            <>
+              <div className="w-full flex flex-wrap justify-center gap-2 mb-4">
+                {infoProviders.map((provider, index) => {
+                  if (selectedIndices.has(index)) {
+                    return (
+                      <span
+                        key={provider.internalName}
+                        className="px-4 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium"
+                      >
+                        {provider.displayName}
+                      </span>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+              {deliveryMethods.map((method, index) => {
+                const isSelected = selectedDeliveryIndices.has(index);
+                const colorClass = isSelected
+                  ? "bg-blue-50 text-blue-700 border-blue-200"
+                  : "bg-white text-black border-gray-200";
+
+                return (
+                  <div
+                    key={method.internalName}
+                    onClick={() => toggleBox(index, 'method')}
+                    className={`w-40 h-32 flex items-center justify-center rounded-2xl border p-4 text-center font-medium shadow-sm cursor-pointer transition-colors ${colorClass}`}
+                  >
+                    {method.displayName}
+                  </div>
+                );
+              })}
+            </>
+          )}
+      </div>
+
+      <div className="w-full flex justify-center gap-4 mt-12">
+        {step > 1 && (
+          <button
+            onClick={() => setStep(1)}
+            className="px-8 py-3 bg-gray-400 text-white font-semibold rounded-lg shadow-md hover:bg-gray-500 transition-colors"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+            Back
+          </button>
+        )}
+        <button
+          onClick={() => setStep(step + 1)}
+          className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-colors"
+          disabled={step === 2}
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 }
